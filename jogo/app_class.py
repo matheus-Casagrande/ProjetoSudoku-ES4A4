@@ -1,5 +1,6 @@
 import pygame, sys
 from settings import *
+from buttonClass import *
 
 
 class App:
@@ -21,25 +22,38 @@ class App:
         # Rastreia a posição do mouse
         self.mousePos = None
 
+        # Guarda o estado do jogo
+        self.state = "playing"
+
+        # Botões para cada estado do jogo
+        self.playingButtons = []
+        self.menuButtons = []
+        self.endButtons = []
+
+        # Carrega os botões de cada estado
+        self.loadButtons()
+
     def run(self):
 
         # Enquanto o programa estiver rodando, executar os métodos:
         while self.running:
+            if self.state == "playing":
+                # Função que detecta os eventos do jogo
+                self.playing_events()
 
-            # Função que detecta os eventos do jogo
-            self.events()
+                # Função que realiza os updates do jogo
+                self.playing_update()
 
-            # Função que realiza os updates do jogo
-            self.update()
-
-            # Função que se responsabiliza por desenhar a GUI
-            self.draw()
+                # Função que se responsabiliza por desenhar a GUI
+                self.playing_draw()
 
         # Quando sair do while, chama os métodos de saída
         pygame.quit()
         sys.exit()
 
-    def events(self):
+    ##### FUNÇÕES DO ESTADO "JOGANDO" #####
+
+    def playing_events(self):
         for event in pygame.event.get():
 
             # Captura o evento de saída do programa
@@ -56,14 +70,22 @@ class App:
                     print("Not on board")
                     self.selected = None
 
-    def update(self):
+    def playing_update(self):
         # Atualiza a posição do mouse
         self.mousePos = pygame.mouse.get_pos()
 
-    def draw(self):
+        # Lógica de verificar se um botão está pressionado ou não
+        for button in self.playingButtons:
+            button.update(self.mousePos)
+
+    def playing_draw(self):
 
         # Seta a cor a ser preenchida como branca
         self.window.fill(WHITE)
+
+        # Desenha os botões
+        for button in self.playingButtons:
+            button.draw(self.window)
 
         # Desenha a casa selecionada
         if self.selected:
@@ -75,10 +97,13 @@ class App:
         # Atualiza o display
         pygame.display.update()
 
+    ##### FUNÇÕES AUXILIARES #####
+
     def drawSelection(self, window, pos):
         # Desenha um retângulo com os seguintes parâmetros:
         # (A janela onde vai desenhar, a cor do retângulo, a posição (left, top, tamanho pra direita, tamanho pra esquerda))
-        pygame.draw.rect(window, LIGHTBLUE, ((pos[0]*cellSize) + gridPos[0], (pos[1]*cellSize) + gridPos[1], cellSize, cellSize))
+        pygame.draw.rect(window, LIGHTBLUE,
+                         ((pos[0] * cellSize) + gridPos[0], (pos[1] * cellSize) + gridPos[1], cellSize, cellSize))
 
     def drawGrid(self, window):
 
@@ -95,19 +120,23 @@ class App:
                 # (A janela onde vai desenhar, a cor da linha, a posição do ponto inicial, a posição do ponto final)
                 # (gridPos[0] + (x* cellSize)) se refere a posição x (horizontal) na janela, gridPos à borda esquerda do tabuleiro e cellSize o tamanho da casa
                 # (gridPos[1]) se refere a posição y (vertical) na janela. Então temos (x, y) para definir a posição do ponto.
-                pygame.draw.line(window, BLACK, (gridPos[0] + (x * cellSize), gridPos[1]), (gridPos[0] + (x * cellSize), gridPos[1] + 450))
+                pygame.draw.line(window, BLACK, (gridPos[0] + (x * cellSize), gridPos[1]),
+                                 (gridPos[0] + (x * cellSize), gridPos[1] + 450))
 
                 '''Desenha a linha'''
                 # Faz a mesma coisa que o comando anterior, mas adaptando pra que seja uma linha horizontal
-                pygame.draw.line(window, BLACK, (gridPos[0], gridPos[1] + (x * cellSize)), (gridPos[0] + 450, gridPos[1] + (x * cellSize)))
+                pygame.draw.line(window, BLACK, (gridPos[0], gridPos[1] + (x * cellSize)),
+                                 (gridPos[0] + 450, gridPos[1] + (x * cellSize)))
             else:
                 '''Desenha a coluna'''
                 # Faz o mesmo que o comando anterior, mas no final o parâmetro 2 engrossa a linha para 2px, em vez do padrão 1px
-                pygame.draw.line(window, BLACK, (gridPos[0] + (x * cellSize), gridPos[1]), (gridPos[0] + (x * cellSize), gridPos[1] + 450), 2)
+                pygame.draw.line(window, BLACK, (gridPos[0] + (x * cellSize), gridPos[1]),
+                                 (gridPos[0] + (x * cellSize), gridPos[1] + 450), 2)
 
                 '''Desenha a linha'''
                 # Repete o comando da linha, engrossando 2px
-                pygame.draw.line(window, BLACK, (gridPos[0], gridPos[1] + (x * cellSize)), (gridPos[0] + 450, gridPos[1] + (x * cellSize)), 2)
+                pygame.draw.line(window, BLACK, (gridPos[0], gridPos[1] + (x * cellSize)),
+                                 (gridPos[0] + 450, gridPos[1] + (x * cellSize)), 2)
 
     '''
     Comentário da função mouseOnGrid():
@@ -115,6 +144,7 @@ class App:
         mas, se ele estiver dentro, ele retornará a casa que foi clicada.
         Essa função é chamada toda vez que ocorre um evento de click.
     '''
+
     def mouseOnGrid(self):
         # Confere se a posição do mouse está fora do tabuleiro pra menos
         if self.mousePos[0] < gridPos[0] or self.mousePos[1] < gridPos[1]:
@@ -125,5 +155,9 @@ class App:
             return False
 
         # Se a função chegou até aqui, é pq a posição do mouse está dentro do tabuleiro, então:
-        return ((self.mousePos[0]-gridPos[0])//cellSize, (self.mousePos[1]-gridPos[1])//cellSize)
+        return ((self.mousePos[0] - gridPos[0]) // cellSize, (self.mousePos[1] - gridPos[1]) // cellSize)
 
+    def loadButtons(self):
+        # Adiciona um botão
+        # Parâmetros: (posLeft, posTop, width, height)
+        self.playingButtons.append(Button(20, 40, 100, 40))
