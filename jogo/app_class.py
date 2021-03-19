@@ -114,7 +114,10 @@ class App:
             # Verifica se o tabuleiro está correto
             if self.allCellsDone():
                 self.checkAllCells()
-                print(self.incorrectCells)
+                # print(self.incorrectCells)
+
+                if len(self.incorrectCells) == 0:
+                    print('congratulations!')
 
 
     def playing_draw(self):
@@ -164,9 +167,25 @@ class App:
 
     def checkAllCells(self):
 
-        self.checkRows()
+        # self.checkRows()
         # self.checkCols()
-        # self.checkSmallGrid()
+        self.checkSmallGrid()
+
+    # todo essa lógica está com um bug
+    def checkSmallGrid(self):
+        for x in range(3):
+            for y in range(3):
+                possibles = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+                for i in range(3):
+                    for j in range(3):
+                        xidx = x*3 + i
+                        yidx = y*3 + j
+                        if self.grid[yidx][xidx] in possibles:
+                            possibles.remove(self.grid[yidx][xidx])
+                        else:
+                            if [xidx, yidx] not in self.lockedCells and [xidx, yidx] not in self.incorrectCells:
+                                self.incorrectCells.append([xidx, yidx])
+                                print("Error found by small grid check")
 
     def checkRows(self):
         # Passa pelo tabuleiro inteiro e adiciona na lista "self.incorrectCells"
@@ -178,9 +197,21 @@ class App:
                 if self.grid[yidx][xidx] in possibles:
                     possibles.remove(self.grid[yidx][xidx])
                 else:
-                    if [xidx, yidx] not in self.lockedCells:
+                    if [xidx, yidx] not in self.lockedCells not in self.incorrectCells:
                         self.incorrectCells.append([xidx, yidx])
 
+    def checkCols(self):
+        # Passa pelo tabuleiro inteiro e adiciona na lista "self.incorrectCells"
+        # toda casa que estiver errada segundo às regras de negócio de coluna.
+        # todo: essa lógica está errada
+        for xidx in range(9):
+            possibles = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+            for yidx, row in enumerate(self.grid):
+                if self.grid[yidx][xidx] in possibles:
+                    possibles.remove(self.grid[yidx][xidx])
+                else:
+                    if [xidx, yidx] not in self.lockedCells not in self.incorrectCells:
+                        self.incorrectCells.append([xidx, yidx])
 
     ##### FUNÇÕES AUXILIARES #####
 

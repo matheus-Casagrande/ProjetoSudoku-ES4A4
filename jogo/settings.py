@@ -29,7 +29,7 @@ finishedBoard = [[5, 3, 4, 6, 7, 8, 9, 1, 2],
                  [7, 1, 3, 9, 2, 4, 8, 5, 6],
                  [9, 6, 1, 5, 3, 7, 2, 8, 4],
                  [2, 8, 7, 4, 1, 9, 6, 3, 5],
-                 [3, 4, 5, 2, 8, 6, 1, 0, 9]]
+                 [3, 4, 5, 2, 8, 6, 1, 7, 0]]
 
 # Posição e tamanho da grade (Positions and sizes)
 gridPos = (75, 100)  # grid Position (left, top)px from border
