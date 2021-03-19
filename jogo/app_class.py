@@ -14,7 +14,7 @@ class App:
         self.running = True
 
         # Guarda a matriz do tabuleiro de sudoku
-        self.grid = testBoard
+        self.grid = testBoard2
 
         # Armazena a informação do botão selecionado atualmente
         self.selected = None
@@ -32,6 +32,10 @@ class App:
 
         # Carrega os botões de cada estado
         self.loadButtons()
+
+        # Define uma fonte para o jogo (fonte, tamanho)
+        self.font = pygame.font.SysFont("arial", cellSize//2)
+
 
     def run(self):
 
@@ -91,6 +95,9 @@ class App:
         if self.selected:
             self.drawSelection(self.window, self.selected)
 
+        # Desenha os números a partir de uma matriz
+        self.drawNumbers(self.window)
+
         # Desenha a grade (grid) do sudoku enviando o "palco" self.window como parâmetro
         self.drawGrid(self.window)
 
@@ -98,6 +105,19 @@ class App:
         pygame.display.update()
 
     ##### FUNÇÕES AUXILIARES #####
+
+    def drawNumbers(self, window):
+        # yidx = index y, row = linha, xidx = index x
+        for yidx, row in enumerate(self.grid):
+            for xidx, number in enumerate(row):
+                # Se o número da grade estiver como 0, ele será vazio
+                if number != 0:
+                    # Seta a posição para a casa que o loop for está lendo
+                    pos = [(xidx*cellSize) + gridPos[0], (yidx*cellSize) + gridPos[1]]
+
+                    # Imprime o número com essa posição (janela, texto, posição)
+                    self.textToScreen(window, str(number), pos)
+
 
     def drawSelection(self, window, pos):
         # Desenha um retângulo com os seguintes parâmetros:
@@ -111,6 +131,7 @@ class App:
         # (A janela onde vai desenhar, a cor do retângulo, a posição (left, top, tamanho pra direita, tamanho pra baixo), o tamanho da borda)
         pygame.draw.rect(window, BLACK, (gridPos[0], gridPos[1], WIDTH - 150, HEIGHT - 150), 2)
 
+        # Desenha os traços do tabuleiro
         for x in range(9):
 
             # Para que a cada três linhas o programa desenhe uma linha mais grossa
@@ -144,7 +165,6 @@ class App:
         mas, se ele estiver dentro, ele retornará a casa que foi clicada.
         Essa função é chamada toda vez que ocorre um evento de click.
     '''
-
     def mouseOnGrid(self):
         # Confere se a posição do mouse está fora do tabuleiro pra menos
         if self.mousePos[0] < gridPos[0] or self.mousePos[1] < gridPos[1]:
@@ -161,3 +181,16 @@ class App:
         # Adiciona um botão
         # Parâmetros: (posLeft, posTop, width, height)
         self.playingButtons.append(Button(20, 40, 100, 40))
+
+    def textToScreen(self, window, text, pos):
+        # Cria uma imagem com um texto (texto, antialias, cor)
+        font = self.font.render(text, False, BLACK)
+
+        # Reajusta a posição para ficar no centro da casa
+        fontWidth = font.get_width()
+        fontHeight = font.get_height()
+        pos[0] += (cellSize - fontWidth) // 2
+        pos[1] += (cellSize - fontHeight) // 2
+
+        # Coloca o objeto font na janela
+        window.blit(font, pos)
