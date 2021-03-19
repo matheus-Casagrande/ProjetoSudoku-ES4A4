@@ -30,11 +30,14 @@ class App:
         self.menuButtons = []
         self.endButtons = []
 
-        # Carrega os botões de cada estado
-        self.loadButtons()
-
         # Define uma fonte para o jogo (fonte, tamanho)
         self.font = pygame.font.SysFont("arial", cellSize//2)
+
+        # Rastreia as celulas (casas) originais do puzzle de sudoku
+        self.lockedCells = []
+
+        # Carrega alguns elementos do aplicativo
+        self.load()
 
 
     def run(self):
@@ -64,6 +67,7 @@ class App:
             if event.type == pygame.QUIT:
                 self.running = False
 
+            # Eventos de clique
             if event.type == pygame.MOUSEBUTTONDOWN:
                 selected = self.mouseOnGrid()
 
@@ -73,6 +77,14 @@ class App:
                 else:
                     print("Not on board")
                     self.selected = None
+
+            # Eventos de digitação (user types a key)
+            if event.type == pygame.KEYDOWN:
+
+                # Coloca o número que o usuário digitou na casa
+                if self.selected is not None and list(self.selected) not in self.lockedCells:
+                    if self.isInt(event.unicode):
+                        self.grid[self.selected[1]][self.selected[0]] = int(event.unicode)
 
     def playing_update(self):
         # Atualiza a posição do mouse
@@ -95,6 +107,9 @@ class App:
         if self.selected:
             self.drawSelection(self.window, self.selected)
 
+        # Desenha a sombra dos números bloqueados (originais do puzzle)
+        self.shadeLockedCells(self.window, self.lockedCells)
+
         # Desenha os números a partir de uma matriz
         self.drawNumbers(self.window)
 
@@ -105,6 +120,13 @@ class App:
         pygame.display.update()
 
     ##### FUNÇÕES AUXILIARES #####
+
+    def shadeLockedCells(self, window, lockedCells):
+        # Pinta de outra cor as casas a serem bloqueadas
+        for cell in lockedCells:
+            # Pinta um retângulo na posição da casa original do puzzle
+            pygame.draw.rect(window, LOCKEDCELLCOLOUR,
+                             (cell[0]*cellSize + gridPos[0], cell[1]*cellSize + gridPos[1], cellSize, cellSize))
 
     def drawNumbers(self, window):
         # yidx = index y, row = linha, xidx = index x
@@ -194,3 +216,25 @@ class App:
 
         # Coloca o objeto font na janela
         window.blit(font, pos)
+
+    def load(self):
+        # Carrega os botões de cada estado
+        self.loadButtons()
+
+        # Carrega as casas que são originais do puzzle
+        # yidx = y index, xidx = x index
+        for yidx, row in enumerate(self.grid):
+            for xidx, number in enumerate(row):
+                if number != 0:
+                    # lockedCells = array que rastreia as casas a serem bloqueadas
+                    self.lockedCells.append([xidx, yidx])
+        print(self.lockedCells)
+
+    def isInt(self, string):
+        # Informa se &string é um inteiro
+        # Tenta passar a string para int, se falhar, retorna False, se não, retorna True
+        try:
+            int(string)
+            return True
+        except:
+            return False
