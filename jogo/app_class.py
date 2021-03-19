@@ -14,7 +14,7 @@ class App:
         self.running = True
 
         # Guarda a matriz do tabuleiro de sudoku
-        self.grid = testBoard2
+        self.grid = finishedBoard
 
         # Armazena a informação do botão selecionado atualmente
         self.selected = None
@@ -24,6 +24,12 @@ class App:
 
         # Guarda o estado do jogo
         self.state = "playing"
+
+        # Verifica se o jogo acabou ou não
+        self.finished = False
+
+        # Rastreia se uma casa do sudoku foi alterada pelo jogador
+        self.cellChanged = False
 
         # Botões para cada estado do jogo
         self.playingButtons = []
@@ -36,9 +42,11 @@ class App:
         # Rastreia as celulas (casas) originais do puzzle de sudoku
         self.lockedCells = []
 
+        # Guarda as casas que o jogador digitou incorretamente
+        self.incorrectCells = []
+
         # Carrega alguns elementos do aplicativo
         self.load()
-
 
     def run(self):
 
@@ -86,6 +94,9 @@ class App:
                     if self.isInt(event.unicode):
                         self.grid[self.selected[1]][self.selected[0]] = int(event.unicode)
 
+                        # Notifica que a casa sofreu uma alteração
+                        self.cellChanged = True
+
     def playing_update(self):
         # Atualiza a posição do mouse
         self.mousePos = pygame.mouse.get_pos()
@@ -93,6 +104,18 @@ class App:
         # Lógica de verificar se um botão está pressionado ou não
         for button in self.playingButtons:
             button.update(self.mousePos)
+
+        # Se houve uma alteração de casa
+        if self.cellChanged:
+
+            # Reseta as células incorretas
+            self.incorrectCells = []
+
+            # Verifica se o tabuleiro está correto
+            if self.allCellsDone():
+                self.checkAllCells()
+                print(self.incorrectCells)
+
 
     def playing_draw(self):
 
@@ -110,6 +133,9 @@ class App:
         # Desenha a sombra dos números bloqueados (originais do puzzle)
         self.shadeLockedCells(self.window, self.lockedCells)
 
+        # Desenha a sobra dos números incorretos
+        self.shadeIncorrectCells(self.window, self.incorrectCells)
+
         # Desenha os números a partir de uma matriz
         self.drawNumbers(self.window)
 
@@ -119,7 +145,51 @@ class App:
         # Atualiza o display
         pygame.display.update()
 
+        # Modifica para falso depois de desenhar a casa alterada
+        self.cellChanged = False
+
+    ##### FUNÇÕES DE CHECAGEM DO TABULEIRO #####
+    '''
+    Comentário da função mouseOnGrid():
+        Confere se o tabuleiro está feito
+    '''
+    def allCellsDone(self):
+        # Se existir alguma célula (ou casa) em branco, retorna False
+        # Caso contrário, retorna true
+        for row in self.grid:
+            for number in row:
+                if number == 0:
+                    return False
+        return True
+
+    def checkAllCells(self):
+
+        self.checkRows()
+        # self.checkCols()
+        # self.checkSmallGrid()
+
+    def checkRows(self):
+        # Passa pelo tabuleiro inteiro e adiciona na lista "self.incorrectCells"
+        # toda casa que estiver errada segundo às regras de negócio de linha.
+        # todo: essa lógica está errada
+        for yidx, row in enumerate(self.grid):
+            possibles = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+            for xidx in range(9):
+                if self.grid[yidx][xidx] in possibles:
+                    possibles.remove(self.grid[yidx][xidx])
+                else:
+                    if [xidx, yidx] not in self.lockedCells:
+                        self.incorrectCells.append([xidx, yidx])
+
+
     ##### FUNÇÕES AUXILIARES #####
+
+    def shadeIncorrectCells(self, window, incorrect):
+        # Pinta de outra cor as casas a serem bloqueadas
+        for cell in incorrect:
+            # Pinta um retângulo na posição da casa original do puzzle
+            pygame.draw.rect(window, INCORRECTCELLCOLOUR,
+                             (cell[0]*cellSize + gridPos[0], cell[1]*cellSize + gridPos[1], cellSize, cellSize))
 
     def shadeLockedCells(self, window, lockedCells):
         # Pinta de outra cor as casas a serem bloqueadas
