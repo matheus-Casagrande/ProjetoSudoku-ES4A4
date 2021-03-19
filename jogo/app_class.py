@@ -1,4 +1,6 @@
 import pygame, sys
+import requests
+from bs4 import BeautifulSoup
 from settings import *
 from buttonClass import *
 
@@ -14,7 +16,8 @@ class App:
         self.running = True
 
         # Guarda a matriz do tabuleiro de sudoku
-        self.grid = finishedBoard
+        # self.grid = finishedBoard # Para debug
+        self.grid = self.getPuzzle("1")  # getPuzzle(1 = easy, 2 = medium, and so on)
 
         # Armazena a informação do botão selecionado atualmente
         self.selected = None
@@ -47,6 +50,7 @@ class App:
 
         # Carrega alguns elementos do aplicativo
         self.load()
+
 
     def run(self):
 
@@ -242,6 +246,36 @@ class App:
 
 
     ##### FUNÇÕES AUXILIARES #####
+
+    def getPuzzle(self, difficulty):
+        # A dificuldade é passada como um número de 1-4 (1 = easy, 2 = medium, and so on)
+
+        # Pega o conteúdo de uma request à página html do sudoku
+        html_doc = requests.get(f"https://nine.websudoku.com/?level={difficulty}").content
+        # Faz esse conteúdo (string de página html) passar por um "embelezamento"
+        soup = BeautifulSoup(html_doc)
+
+        # Cria um arrays com ids: [f00, f01, f02, ... f57 f58 f60 f61 ... f87 f88]
+        ids = []
+        for i in range(9):
+            for j in range(9):
+                ids.append(f"f{i}{j}")
+
+        # Cria uma lista "data" e a faz filtrar a parte que interessa do html pela lista de ids
+        data = []
+        for cid in ids:
+            data.append(soup.find('input', id=cid))
+
+        # Cria uma matriz 9x9 cheia de 0s
+        board = [[0 for x in range(9)] for x in range(9)]
+
+        # Dentro da lógica do html, pega o valor da célula e joga dentro da matriz "board"
+        for index, cell in enumerate(data):
+            try:
+                board[index//9][index%9] = int(cell['value'])
+            except:
+                pass
+        return board
 
     def shadeIncorrectCells(self, window, incorrect):
         # Pinta de outra cor as casas a serem bloqueadas
