@@ -167,11 +167,10 @@ class App:
 
     def checkAllCells(self):
 
-        # self.checkRows()
-        # self.checkCols()
+        self.checkRows()
+        self.checkCols()
         self.checkSmallGrid()
 
-    # todo essa lógica está com um bug
     def checkSmallGrid(self):
         for x in range(3):
             for y in range(3):
@@ -185,12 +184,19 @@ class App:
                         else:
                             if [xidx, yidx] not in self.lockedCells and [xidx, yidx] not in self.incorrectCells:
                                 self.incorrectCells.append([xidx, yidx])
-                                print("Error found by small grid check")
+
+                            # Explicação do if abaixo na função similar "checkRows()"
+                            if [xidx, yidx] in self.lockedCells:
+                                for k in range(3):
+                                    for l in range(3):
+                                        xidx2 = x * 3 + k
+                                        yidx2 = y * 3 + l
+                                        if self.grid[yidx2][xidx2] == self.grid[yidx][xidx] and [xidx2, yidx2] not in self.lockedCells:
+                                            self.incorrectCells.append([xidx2, yidx2])
 
     def checkRows(self):
         # Passa pelo tabuleiro inteiro e adiciona na lista "self.incorrectCells"
         # toda casa que estiver errada segundo às regras de negócio de linha.
-        # todo: essa lógica está errada
         for yidx, row in enumerate(self.grid):
             possibles = [1, 2, 3, 4, 5, 6, 7, 8, 9]
             for xidx in range(9):
@@ -200,10 +206,26 @@ class App:
                     if [xidx, yidx] not in self.lockedCells not in self.incorrectCells:
                         self.incorrectCells.append([xidx, yidx])
 
+                    # Se for uma casa do puzzle original (lockedCell), confere novamente, pois mesmo que
+                    # uma casa tenha sido dada como possível, por ela estar mais à esquerda, ela pode estar falsa
+                    # pois no começo da leitura, só tinha ela. Então o programa lê uma segunda vez para casas
+                    # trancadas. Pois as casas trancadas têm prioridade, independente da ordem de leitura. Então
+                    # um erro como: >5< 1 2 3 4 5 6 7 8, que indicaria a primeira casa como possível, mesmo sendo
+                    # óbvio que a única casa possível aí tenha que ser 9, não irá acontecer com essa "recheckagem"
+                    if [xidx, yidx] in self.lockedCells:
+                        for k in range(9):
+                            # explicação do "and [k, yidx] not in self.lockedCells":
+                            #   Caso não tivesse esse "and", o programa ia ler de novo quando a casa fosse exatamente
+                            #   a mesma self.lockedCell que está sendo conferida. Ou seja: [7][1] == [7][1]. E é óbvio
+                            #   que o valor é igual, pois está se lendo a mesma posição. A única comparação que queremos
+                            #   são as diferentes para x, como [7][3] == [7][1]. Caso não existisse esse and, as próprias
+                            #   casas trancadas ficariam marcadas.
+                            if self.grid[yidx][k] == self.grid[yidx][xidx] and [k, yidx] not in self.lockedCells:
+                                self.incorrectCells.append([k, yidx])
+
     def checkCols(self):
         # Passa pelo tabuleiro inteiro e adiciona na lista "self.incorrectCells"
         # toda casa que estiver errada segundo às regras de negócio de coluna.
-        # todo: essa lógica está errada
         for xidx in range(9):
             possibles = [1, 2, 3, 4, 5, 6, 7, 8, 9]
             for yidx, row in enumerate(self.grid):
@@ -212,6 +234,12 @@ class App:
                 else:
                     if [xidx, yidx] not in self.lockedCells not in self.incorrectCells:
                         self.incorrectCells.append([xidx, yidx])
+                    # Explicação do if abaixo na função similar "checkRows()"
+                    if [xidx, yidx] in self.lockedCells:
+                        for k, row in enumerate(self.grid):
+                            if self.grid[k][xidx] == self.grid[yidx][xidx] and [xidx, k] not in self.lockedCells:
+                                self.incorrectCells.append([xidx, k])
+
 
     ##### FUNÇÕES AUXILIARES #####
 
