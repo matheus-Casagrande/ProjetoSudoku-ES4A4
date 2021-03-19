@@ -15,10 +15,6 @@ class App:
         # Seta o estado de 'rodando' ao programa
         self.running = True
 
-        # Guarda a matriz do tabuleiro de sudoku
-        # self.grid = finishedBoard # Para debug
-        self.grid = self.getPuzzle("1")  # getPuzzle(1 = easy, 2 = medium, and so on)
-
         # Armazena a informação do botão selecionado atualmente
         self.selected = None
 
@@ -34,10 +30,8 @@ class App:
         # Rastreia se uma casa do sudoku foi alterada pelo jogador
         self.cellChanged = False
 
-        # Botões para cada estado do jogo
+        # Botões
         self.playingButtons = []
-        self.menuButtons = []
-        self.endButtons = []
 
         # Define uma fonte para o jogo (fonte, tamanho)
         self.font = pygame.font.SysFont("arial", cellSize//2)
@@ -48,9 +42,10 @@ class App:
         # Guarda as casas que o jogador digitou incorretamente
         self.incorrectCells = []
 
-        # Carrega alguns elementos do aplicativo
-        self.load()
-
+        # Guarda a matriz do tabuleiro de sudoku
+        # self.grid = finishedBoard # Para debug
+        self.grid = []
+        self.getPuzzle("1")  # getPuzzle(1 = easy, 2 = medium, and so on)
 
     def run(self):
 
@@ -87,8 +82,10 @@ class App:
                 if selected:
                     self.selected = selected
                 else:
-                    print("Not on board")
                     self.selected = None
+                    for button in self.playingButtons:
+                        if button.highlighted:
+                            button.click()
 
             # Eventos de digitação (user types a key)
             if event.type == pygame.KEYDOWN:
@@ -275,7 +272,9 @@ class App:
                 board[index//9][index%9] = int(cell['value'])
             except:
                 pass
-        return board
+
+        self.grid = board  # Recarrega o tabuleiro
+        self.load()  # # Carrega alguns elementos do aplicativo
 
     def shadeIncorrectCells(self, window, incorrect):
         # Pinta de outra cor as casas a serem bloqueadas
@@ -365,7 +364,34 @@ class App:
     def loadButtons(self):
         # Adiciona um botão
         # Parâmetros: (posLeft, posTop, width, height)
-        self.playingButtons.append(Button(20, 40, 100, 40))
+        self.playingButtons.append(Button(20, 40, WIDTH // 7, 40,
+                                          function=self.checkAllCells,
+                                          colour=(27, 142, 207),
+                                          text="Check"))
+
+        self.playingButtons.append(Button(140, 40, WIDTH // 7, 40,
+                                          function=self.getPuzzle,
+                                          colour=(117, 172, 112),
+                                          params="1",
+                                          text="Easy"))
+
+        self.playingButtons.append(Button(WIDTH//2-(WIDTH//7)//2, 40, WIDTH//7, 40,
+                                          function=self.getPuzzle,
+                                          colour=(204, 197, 110),
+                                          params="2",
+                                          text="Medium"))
+
+        self.playingButtons.append(Button(380, 40, WIDTH//7, 40,
+                                          function=self.getPuzzle,
+                                          colour=(199, 129, 48),
+                                          params="3",
+                                          text="Hard"))
+
+        self.playingButtons.append(Button(500, 40, WIDTH // 7, 40,
+                                          function=self.getPuzzle,
+                                          colour=(206, 68, 68),
+                                          params="4",
+                                          text="Evil"))
 
     def textToScreen(self, window, text, pos):
         # Cria uma imagem com um texto (texto, antialias, cor)
@@ -381,8 +407,17 @@ class App:
         window.blit(font, pos)
 
     def load(self):
+        # Limpa os botões para que não fiquem vestígios de botões, carregando vários puzzles de uma
+        # vez e causando lentidão desnecessária ao app.
+        self.playingButtons = []
+
         # Carrega os botões de cada estado
         self.loadButtons()
+
+        # Reinicia o jogo
+        self.incorrectCells = []
+        self.lockedCells = []
+        self.finished = False
 
         # Carrega as casas que são originais do puzzle
         # yidx = y index, xidx = x index
@@ -391,7 +426,6 @@ class App:
                 if number != 0:
                     # lockedCells = array que rastreia as casas a serem bloqueadas
                     self.lockedCells.append([xidx, yidx])
-        print(self.lockedCells)
 
     def isInt(self, string):
         # Informa se &string é um inteiro

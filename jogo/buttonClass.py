@@ -1,4 +1,5 @@
 import pygame
+from settings import *
 
 class Button:
 
@@ -19,6 +20,8 @@ class Button:
         self.highlightedColour = highlightedColour
         self.function = function
         self.params = params
+        self.width = width
+        self.height = height
 
     def update(self, mouse):
 
@@ -32,5 +35,31 @@ class Button:
         # Se o botão estiver destacado, preenche com a cor destacada, se não, com a cor padrão
         self.image.fill(self.highlightedColour if self.highlighted else self.colour)
 
+        # Desenha o texto do botão
+        if self.text:
+            self.drawText(self.text)
+
         # Atualiza o botão na janela
         window.blit(self.image, self.pos)
+
+    def click(self):
+        if self.params:
+            self.function(self.params)
+        else:
+            self.function()
+
+    def drawText(self, text):
+        # Configurando a fonte do botão
+        font = pygame.font.SysFont("arial", 20, bold=1)
+
+        # Renderizando o texto do botão pra uma imagem
+        text = font.render(text, False, BLACK)
+
+        # Pegando o tamanho da imagem do texto
+        width, height = text.get_size()
+
+        x = (self.width-width) // 2
+        y = (self.height - height) // 2
+
+        # Atualiza a imagem do botão com o texto
+        self.image.blit(text, (x, y))
