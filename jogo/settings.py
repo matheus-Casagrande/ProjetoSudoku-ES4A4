@@ -8,6 +8,13 @@ LIGHTBLUE = (96, 216, 232)
 LOCKEDCELLCOLOUR = (189, 189, 189)
 INCORRECTCELLCOLOUR = (195, 121, 121)
 
+# Ranking
+RANKING = ["1 321 Gabriel",
+            "2 400 Any",
+            "3 445 Matheus",
+            "4 470 Fulano",
+            "5 503 Ciclano"]
+
 
 # Boards (tabuleiros)
 testBoard = [[0 for x in range(9)] for x in range(9)]   # forma uma matriz 9x9 com '0s'

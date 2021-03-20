@@ -47,19 +47,22 @@ class App:
         self.grid = []
         self.getPuzzle("1")  # getPuzzle(1 = easy, 2 = medium, and so on)
 
+        # Para indicar quando criar um ranking
+        self.rankingMode = False
+
     def run(self):
 
         # Enquanto o programa estiver rodando, executar os métodos:
         while self.running:
             if self.state == "playing":
                 # Função que detecta os eventos do jogo
-                self.playing_events()
+                self.events()
 
                 # Função que realiza os updates do jogo
-                self.playing_update()
+                self.update()
 
                 # Função que se responsabiliza por desenhar a GUI
-                self.playing_draw()
+                self.draw()
 
         # Quando sair do while, chama os métodos de saída
         pygame.quit()
@@ -67,7 +70,7 @@ class App:
 
     ##### FUNÇÕES DO ESTADO "JOGANDO" #####
 
-    def playing_events(self):
+    def events(self):
         for event in pygame.event.get():
 
             # Captura o evento de saída do programa
@@ -98,7 +101,7 @@ class App:
                         # Notifica que a casa sofreu uma alteração
                         self.cellChanged = True
 
-    def playing_update(self):
+    def update(self):
         # Atualiza a posição do mouse
         self.mousePos = pygame.mouse.get_pos()
 
@@ -121,7 +124,7 @@ class App:
                     print('congratulations!')
 
 
-    def playing_draw(self):
+    def draw(self):
 
         # Seta a cor a ser preenchida como branca
         self.window.fill(WHITE)
@@ -130,27 +133,35 @@ class App:
         for button in self.playingButtons:
             button.draw(self.window)
 
-        # Desenha a casa selecionada
-        if self.selected:
-            self.drawSelection(self.window, self.selected)
+        if not self.rankingMode:
+            # Desenha a casa selecionada
+            if self.selected:
+                self.drawSelection(self.window, self.selected)
 
-        # Desenha a sombra dos números bloqueados (originais do puzzle)
-        self.shadeLockedCells(self.window, self.lockedCells)
+            # Desenha a sombra dos números bloqueados (originais do puzzle)
+            self.shadeLockedCells(self.window, self.lockedCells)
 
-        # Desenha a sobra dos números incorretos
-        self.shadeIncorrectCells(self.window, self.incorrectCells)
+            # Desenha a sobra dos números incorretos
+            self.shadeIncorrectCells(self.window, self.incorrectCells)
 
-        # Desenha os números a partir de uma matriz
-        self.drawNumbers(self.window)
+            # Desenha os números a partir de uma matriz
+            self.drawNumbers(self.window)
 
-        # Desenha a grade (grid) do sudoku enviando o "palco" self.window como parâmetro
-        self.drawGrid(self.window)
+            # Desenha a grade (grid) do sudoku enviando o "palco" self.window como parâmetro
+            self.drawGrid(self.window)
+        else:
+            # Pinta um quadrado grande com borda preta
+            pygame.draw.rect(self.window, WHITE, (gridPos[0], gridPos[1], WIDTH - 150, HEIGHT - 150), 2)
+
+            # Desenha o ranking na tela
+            self.drawRanking()
 
         # Atualiza o display
         pygame.display.update()
 
         # Modifica para falso depois de desenhar a casa alterada
         self.cellChanged = False
+
 
     ##### FUNÇÕES DE CHECAGEM DO TABULEIRO #####
     '''
@@ -180,8 +191,12 @@ class App:
                     for j in range(3):
                         xidx = x*3 + i
                         yidx = y*3 + j
-                        if self.grid[yidx][xidx] in possibles:
-                            possibles.remove(self.grid[yidx][xidx])
+                        if self.grid[yidx][xidx] in possibles or self.grid[yidx][xidx] == 0:
+                            # Esse try é pq se o valor for zero, ele não vai conseguir ser retirado da lista, dando um Value Error
+                            try:
+                                possibles.remove(self.grid[yidx][xidx])
+                            except ValueError:
+                                pass
                         else:
                             if [xidx, yidx] not in self.lockedCells and [xidx, yidx] not in self.incorrectCells:
                                 self.incorrectCells.append([xidx, yidx])
@@ -201,8 +216,12 @@ class App:
         for yidx, row in enumerate(self.grid):
             possibles = [1, 2, 3, 4, 5, 6, 7, 8, 9]
             for xidx in range(9):
-                if self.grid[yidx][xidx] in possibles:
-                    possibles.remove(self.grid[yidx][xidx])
+                if self.grid[yidx][xidx] in possibles or self.grid[yidx][xidx] == 0:
+                    # Esse try é pq se o valor for zero, ele não vai conseguir ser retirado da lista, dando um Value Error
+                    try:
+                        possibles.remove(self.grid[yidx][xidx])
+                    except ValueError:
+                        pass
                 else:
                     if [xidx, yidx] not in self.lockedCells not in self.incorrectCells:
                         self.incorrectCells.append([xidx, yidx])
@@ -230,8 +249,12 @@ class App:
         for xidx in range(9):
             possibles = [1, 2, 3, 4, 5, 6, 7, 8, 9]
             for yidx, row in enumerate(self.grid):
-                if self.grid[yidx][xidx] in possibles:
-                    possibles.remove(self.grid[yidx][xidx])
+                if self.grid[yidx][xidx] in possibles or self.grid[yidx][xidx] == 0:
+                    # Esse try é pq se o valor for zero, ele não vai conseguir ser retirado da lista, dando um Value Error
+                    try:
+                        possibles.remove(self.grid[yidx][xidx])
+                    except ValueError:
+                        pass
                 else:
                     if [xidx, yidx] not in self.lockedCells not in self.incorrectCells:
                         self.incorrectCells.append([xidx, yidx])
@@ -373,25 +396,24 @@ class App:
                                           function=self.getPuzzle,
                                           colour=(117, 172, 112),
                                           params="1",
-                                          text="Easy"))
+                                          text="New"))
 
         self.playingButtons.append(Button(WIDTH//2-(WIDTH//7)//2, 40, WIDTH//7, 40,
                                           function=self.getPuzzle,
                                           colour=(204, 197, 110),
                                           params="2",
-                                          text="Medium"))
+                                          text="Solve"))
 
         self.playingButtons.append(Button(380, 40, WIDTH//7, 40,
-                                          function=self.getPuzzle,
+                                          function=self.turnRankingMode,
                                           colour=(199, 129, 48),
-                                          params="3",
-                                          text="Hard"))
+                                          text="Ranking"))
 
         self.playingButtons.append(Button(500, 40, WIDTH // 7, 40,
                                           function=self.getPuzzle,
                                           colour=(206, 68, 68),
                                           params="4",
-                                          text="Evil"))
+                                          text="Timer"))
 
     def textToScreen(self, window, text, pos):
         # Cria uma imagem com um texto (texto, antialias, cor)
@@ -435,3 +457,36 @@ class App:
             return True
         except:
             return False
+
+    '''
+    Explicação da turnRankingMode():
+        É uma função conectada com um botão, que serve para alterar a variável "drawRanking"
+        para que assim, na função playing_draw haja a devida alteração
+    '''
+    def turnRankingMode(self):
+        if self.rankingMode:
+            self.rankingMode = False
+        else:
+            self.rankingMode = True
+
+    def drawRanking(self):
+        # Altera a fonte para 1.33x maior, para o título
+        self.font = pygame.font.SysFont("arial", cellSize * 2 // 3, bold=1)
+
+        # Imprime o título
+        self.textToScreen(self.window, "Ranking", [(WIDTH // 2) - 25, 100])
+
+        # Volta à fonte padrão
+        self.font = pygame.font.SysFont("arial", cellSize // 2)
+
+        # Imprime o ranking
+        for index, row in enumerate(self.readRanking()):
+            infos = row.split(' ')
+            text = f'Top {infos[0]} - {infos[2]} - Tempo: {infos[1]}s'
+            self.textToScreen(self.window, text, [(WIDTH // 2) - 25, 160+index*50])
+
+    def readRanking(self):
+        f = open('ranking.txt', 'r')
+        ranking = f.read()
+        return ranking.split('\n')
+
