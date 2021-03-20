@@ -3,6 +3,8 @@ import requests
 from bs4 import BeautifulSoup
 from settings import *
 from buttonClass import *
+sys.path.append('..')
+from resolvedor.resolvedorDeSudoku import resolverSudoku
 
 
 class App:
@@ -49,6 +51,7 @@ class App:
 
         # Para indicar quando criar um ranking
         self.rankingMode = False
+        # print(resolverSudoku(self.grid))
 
     def run(self):
 
@@ -399,9 +402,8 @@ class App:
                                           text="New"))
 
         self.playingButtons.append(Button(WIDTH//2-(WIDTH//7)//2, 40, WIDTH//7, 40,
-                                          function=self.getPuzzle,
+                                          function=self.solvePuzzle,
                                           colour=(204, 197, 110),
-                                          params="2",
                                           text="Solve"))
 
         self.playingButtons.append(Button(380, 40, WIDTH//7, 40,
@@ -490,3 +492,10 @@ class App:
         ranking = f.read()
         return ranking.split('\n')
 
+    def solvePuzzle(self):
+        for y in range(9):
+            for x in range(9):
+                if [x, y] not in self.lockedCells:
+                    self.grid[y][x] = 0
+        resolverSudoku(self.grid)
+        # print(self.lockedCells)
