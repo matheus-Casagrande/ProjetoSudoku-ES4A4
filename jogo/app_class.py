@@ -5,6 +5,7 @@ from settings import *
 from buttonClass import *
 sys.path.append('..')
 from resolvedor.resolvedorDeSudoku import resolverSudoku
+import time
 
 
 class App:
@@ -44,14 +45,36 @@ class App:
         # Guarda as casas que o jogador digitou incorretamente
         self.incorrectCells = []
 
+        # Para lógica do timer
+        self.timerIsOn = False  # Embora esteja em false, a função "getPuzzle" altera pra True
+        self.startTime = time.time()
+        self.time = time.time()
+
         # Guarda a matriz do tabuleiro de sudoku
         # self.grid = finishedBoard # Para debug
         self.grid = []
         self.getPuzzle("1")  # getPuzzle(1 = easy, 2 = medium, and so on)
+        self.grid = finishedBoard
+        try:
+            self.lockedCells.remove([0,0])
+        except:
+            pass
 
         # Para indicar quando criar um ranking
         self.rankingMode = False
-        # print(resolverSudoku(self.grid))
+
+        # Para indicar quando o usuário acabou o jogo e vai colocar o nome dele
+        self.finalScreen = False
+
+        # Parâmetros da caixa de digitação do final
+        self.input_rect = pygame.Rect(250, 250, 140, 32)
+        self.input_color_active = pygame.Color('lightskyblue3')
+        self.input_color_passive = pygame.Color('gray15')
+        self.input_color = self.input_color_passive
+        self.input_active = False
+        self.input_texto = ''
+        # self.clock = pygame.time.Clock()
+
 
     def run(self):
 
@@ -93,6 +116,13 @@ class App:
                         if button.highlighted:
                             button.click()
 
+                # Lógica para o botão de input no final do jogo (para inserir o nome)
+                if self.finalScreen:
+                    if self.input_rect.collidepoint(event.pos):
+                        self.input_active = True
+                    else:
+                        self.input_active = False
+
             # Eventos de digitação (user types a key)
             if event.type == pygame.KEYDOWN:
 
@@ -103,6 +133,18 @@ class App:
 
                         # Notifica que a casa sofreu uma alteração
                         self.cellChanged = True
+
+                # Lógica para o botão de input no final do jogo (para inserir o nome)
+                if self.finalScreen:
+                    if self.input_active:
+                        if event.key == pygame.K_BACKSPACE:
+                            self.input_texto = self.input_texto[:-1]
+                        # Caso o usuário digite enter e não escreva um nome vazio
+                        elif (event.key == pygame.K_KP_ENTER or event.key == pygame.K_RETURN) and self.input_texto != '':
+                            # Esse comando abaixo define a última finalização do jogo
+                            self.finishGame(winner=True, write=True)
+                        else:
+                            self.input_texto += event.unicode
 
     def update(self):
         # Atualiza a posição do mouse
@@ -124,7 +166,8 @@ class App:
                 # print(self.incorrectCells)
 
                 if len(self.incorrectCells) == 0:
-                    print('congratulations!')
+                    # print('congratulations!')
+                    self.finishGame(winner=True)
 
 
     def draw(self):
@@ -136,7 +179,10 @@ class App:
         for button in self.playingButtons:
             button.draw(self.window)
 
-        if not self.rankingMode:
+        # Desenha o timer
+        self.drawTimer()
+
+        if not self.rankingMode and not self.finalScreen:
             # Desenha a casa selecionada
             if self.selected:
                 self.drawSelection(self.window, self.selected)
@@ -152,6 +198,72 @@ class App:
 
             # Desenha a grade (grid) do sudoku enviando o "palco" self.window como parâmetro
             self.drawGrid(self.window)
+
+
+        elif self.finalScreen:
+            ### Texto de parabéns ###
+
+            # Define a fonte para o texto de "Parabéns!!!"
+            self.font = pygame.font.SysFont("arial", 70)
+
+            # Renderiza o texto "Parabéns"
+            self.textToScreen(self.window, 'PARABÉNS!!!', [280, 150], colour=LIGHTGREEN)
+            # Desenha um retângulo vermelho embaixo do timer
+            # pygame.draw.rect(self.window, (206, 68, 68), (500, 40, WIDTH // 7, 40))
+
+            # Volta para a fonte padrão
+            self.font = pygame.font.SysFont("arial", cellSize // 2)
+
+            ### Texto "Nome: " ###
+
+            # Define a fonte para o texto de "Nome: "
+            self.font = pygame.font.SysFont("arial", cellSize // 2)
+
+            # Renderiza o texto "Nome: "
+            self.textToScreen(self.window, 'Nome: ', [180, 240], colour=BLACK)
+
+            ### Caixa de input ###
+
+            # Configura a fonte da digitação
+            base_font = pygame.font.Font(None, 32)
+
+            # Configura a cor de acordo com o que está ativo
+            if self.input_active:
+                self.input_color = self.input_color_active
+            else:
+                self.input_color = self.input_color_passive
+
+            # Desenha o retângulo
+            pygame.draw.rect(self.window, self.input_color, self.input_rect, 2)
+
+            # Texto a ser renderizado
+            text_surface = base_font.render(self.input_texto, True, BLACK)
+
+            # Atualiza a tela com o texto
+            self.window.blit(text_surface, (self.input_rect.x + 5, self.input_rect.y + 5))
+
+            # Ajusta o tamanho do retângulo dinâmicamente
+            self.input_rect.w = max(100, text_surface.get_width() + 10)
+
+            ### Texto "Pontuação: [____] " ###
+
+            # Define a fonte para o texto de "Pontuação: [____]"
+            self.font = pygame.font.SysFont("arial", cellSize // 2)
+
+            # Renderiza o texto "Pontuação: [____]"
+            self.textToScreen(self.window, f'Tempo p/ fazer: {self.time}s', [260, 280], colour=pygame.Color('purple'))
+
+            ### Texto "(Insira um nome para continuar)" ###
+
+            # Define a fonte para o texto de "(Insira um nome para continuar)"
+            self.font = pygame.font.SysFont("arial", cellSize // 3)
+
+            # Renderiza o texto "Pontuação: [____]"
+            self.textToScreen(self.window, '(Insira um nome para continuar)', [250, 320])
+
+            # Define a fonte padrão "
+            self.font = pygame.font.SysFont("arial", cellSize // 2)
+
         else:
             # Pinta um quadrado grande com borda preta
             pygame.draw.rect(self.window, WHITE, (gridPos[0], gridPos[1], WIDTH - 150, HEIGHT - 150), 2)
@@ -411,15 +523,9 @@ class App:
                                           colour=(199, 129, 48),
                                           text="Ranking"))
 
-        self.playingButtons.append(Button(500, 40, WIDTH // 7, 40,
-                                          function=self.getPuzzle,
-                                          colour=(206, 68, 68),
-                                          params="4",
-                                          text="Timer"))
-
-    def textToScreen(self, window, text, pos):
+    def textToScreen(self, window, text, pos, colour=BLACK):
         # Cria uma imagem com um texto (texto, antialias, cor)
-        font = self.font.render(text, False, BLACK)
+        font = self.font.render(str(text), False, colour)
 
         # Reajusta a posição para ficar no centro da casa
         fontWidth = font.get_width()
@@ -442,6 +548,12 @@ class App:
         self.incorrectCells = []
         self.lockedCells = []
         self.finished = False
+        self.state = "playing"
+
+        # Reajusta o timer
+        self.timerIsOn = True
+        self.startTime = time.time()
+        self.time = time.time()
 
         # Carrega as casas que são originais do puzzle
         # yidx = y index, xidx = x index
@@ -476,7 +588,7 @@ class App:
         self.font = pygame.font.SysFont("arial", cellSize * 2 // 3, bold=1)
 
         # Imprime o título
-        self.textToScreen(self.window, "Ranking", [(WIDTH // 2) - 25, 100])
+        self.textToScreen(self.window, "Ranking", [(WIDTH // 2) - 25, 100], colour=DARKRED)
 
         # Volta à fonte padrão
         self.font = pygame.font.SysFont("arial", cellSize // 2)
@@ -492,10 +604,43 @@ class App:
         ranking = f.read()
         return ranking.split('\n')
 
+    def writeRanking(self, info):
+        pass
+
     def solvePuzzle(self):
         for y in range(9):
             for x in range(9):
                 if [x, y] not in self.lockedCells:
                     self.grid[y][x] = 0
         resolverSudoku(self.grid)
+
+        self.finishGame(winner=False)
         # print(self.lockedCells)
+
+    def drawTimer(self):
+        # Desenha um retângulo vermelho embaixo do timer
+        pygame.draw.rect(self.window, (206, 68, 68), (500, 40, WIDTH // 7, 40))
+
+        if self.timerIsOn:
+            # Seta a fonte do timer
+            self.font = pygame.font.SysFont("comicsans", 70 // 2, bold=1)
+
+            # Ajusta o tempo
+            self.time = (time.time() - self.startTime).__round__(2)
+
+            # Coloca o timer
+            self.textToScreen(self.window, self.time, [525, 35], colour=DARKRED)
+
+            # Volta à fonte padrão
+            self.font = pygame.font.SysFont("arial", cellSize // 2)
+
+    def finishGame(self, winner=True, write=False):
+        self.timerIsOn = False
+        if winner:
+            # Começa a tela de finalização
+            self.finalScreen = True
+            if write:
+                # Escreve no ranking
+                self.writeRanking((self.time))
+                # Sai da tela de finalização
+                self.finalScreen = False
