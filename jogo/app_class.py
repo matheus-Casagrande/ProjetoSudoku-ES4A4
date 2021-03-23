@@ -1,3 +1,5 @@
+# IMPORTS DE DEPENDÊNCIA
+
 import pygame, sys
 import requests
 from bs4 import BeautifulSoup
@@ -7,9 +9,13 @@ sys.path.append('..')
 from resolvedor.resolvedorDeSudoku import resolverSudoku
 import time
 
+# IMPORTS DE TESTE
+from testes.testes_Resolvedor.posiciona_amostra import sudokuToTxt as importarTabuleiro
+
 
 class App:
-    def __init__(self):
+    def __init__(self, testes=False, tabuleiroTerminado=False):
+        self.testes = testes
         pygame.init()
 
         # Configura a janela do jogo
@@ -54,11 +60,13 @@ class App:
         # self.grid = finishedBoard # Para debug
         self.grid = []
         self.getPuzzle("1")  # getPuzzle(1 = easy, 2 = medium, and so on)
-        self.grid = finishedBoard
-        try:
-            self.lockedCells.remove([0,0])
-        except:
-            pass
+        if self.testes and tabuleiroTerminado:
+            self.grid = finishedBoard  # todo seta um tabuleiro terminado pro sudoku
+            # todo remove a casa (0, 0) de "locked" para garantir a lógica de testagem
+            try:
+                self.lockedCells.remove([0,0])
+            except:
+                pass
 
         # Para indicar quando criar um ranking
         self.rankingMode = False
@@ -594,10 +602,11 @@ class App:
         self.font = pygame.font.SysFont("arial", cellSize // 2)
 
         # Imprime o ranking
-        for index, row in enumerate(self.readRanking()):
-            infos = row.split(' ')
-            text = f'Top {infos[0]} - {infos[2]} - Tempo: {infos[1]}s'
-            self.textToScreen(self.window, text, [(WIDTH // 2) - 25, 160+index*50])
+        if self.readRanking()[0] != '':
+            for index, row in enumerate(self.readRanking()):
+                infos = row.split(' ')
+                text = f'Top {infos[0]} - {infos[2]} - Tempo: {infos[1]}s'
+                self.textToScreen(self.window, text, [(WIDTH // 2) - 25, 160+index*50])
 
     def readRanking(self):
         f = open('ranking.txt', 'r')
@@ -678,6 +687,10 @@ class App:
         resolverSudoku(self.grid)
 
         self.finishGame(winner=False)
+
+        if self.testes:
+            # Manda uma cópia do tabuleiro para a pasta testes/testes_Resolsovedor
+            importarTabuleiro(self.grid)  # todo criada para teste
         # print(self.lockedCells)
 
     def drawTimer(self):
