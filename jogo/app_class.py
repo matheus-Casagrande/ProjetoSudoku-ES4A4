@@ -606,33 +606,68 @@ class App:
         return ranking.split('\n')
 
     def writeRanking(self):
+        # Lê o arquivo e guarda cada linha dele em uma string de uma lista
         posicoes = self.readRanking()
-        posicoes.append(f'6 {self.time} {self.input_texto.capitalize().strip()}')
 
-        print(posicoes)
-        print(bubble_sort(posicoes))
-        # posicoesAux = posicoes
-        # tempos = []
-        # for posicao in posicoes:
-        #     tempo = posicao.split(' ')
-        #     tempos.append(float(tempo[1]))
-        # tempos = bubble_sort(tempos)
-        #
-        # for index, posicao in enumerate(posicoesAux):
-        #     infos = posicao.split()
-        #     posicoesAux[index] = infos
-        #
-        # print(f'tempos: {tempos} | posicoes = {posicoes } | posicoesAux {posicoesAux}')
-        #
-        # for i in range(len(posicoes)):
-        #     for posicao in posicoesAux:
-        #         if float(posicao[1]) == tempos[i]:
-        #             posicoes[i] = ' '.join(posicao)
-        #             break
+        # Adiciona a posição atual do jogador
+        posicaoAtual = f'{len(posicoes)+1} {self.time} {self.input_texto.capitalize().strip()}'
+        if posicoes[0].strip() == '':  # Se "ranking.txt" estiver vazio
+            posicoes[0] = posicaoAtual  # posicoes[0] antes de receber posicao atual contém '' se for o ranking está vazio
+        else:  # Caso "ranking.txt" não esteja vazio
+            posicoes.append(posicaoAtual)
 
+        # Quebra cada string da lista em outras listas, tornando "posicoes" uma lista de listas
+        for i in range(len(posicoes)):
+            # split: corta a string no caractere 'espaço' e joga os elementos em uma nova lista
+            posicoes[i] = posicoes[i].split(' ')
 
+        posicoesArrumadas = []
+
+        # Organiza as posições em "posicoesArrumadas"
+        for i in range(len(posicoes)):
+            # Exemplo: ['1', '321', 'Gabriel']
+            # n é '321', ou seja, o tempo que foi concluído o sudoku
+            n = posicoes[i][1]
+            # Se a lista posicoesArrumadas está vazia
+            if len(posicoesArrumadas) == 0:
+                posicoesArrumadas.append(posicoes[i])
+            else:
+                # Se o valor cabe no final
+                if n > posicoesArrumadas[-1][1]:
+                    posicoesArrumadas.append(posicoes[i])
+
+                # Se o valor não cabe no final, ler a lista até caber e inserir na posição q dá
+                else:
+                    pos = 0
+                    while pos < len(posicoesArrumadas):
+                        if n <= posicoesArrumadas[pos][1]:
+                            posicoesArrumadas.insert(pos, posicoes[i])
+                            break
+                        pos += 1
+
+        # Arruma posicoesArrumadas para forma de lista de strings, com as devidas alterações já feitas
+        for i in range(len(posicoesArrumadas)):
+            # Exemplo -> posicoesArrumadas[i] = ['6', '1.02', 'A']
+            # Arruma o '6' pra '1'
+            posicoesArrumadas[i][0] = f'{i+1}'
+
+            # Cria uma quebra de linha para cada posição
+            posicoesArrumadas[i][2] = f'{posicoesArrumadas[i][2]}\n'
+
+            # Cria uma string com as informações da lista
+            # Exemplo -> '1 1.02 A'
+            posicoesArrumadas[i] = ' '.join(posicoesArrumadas[i])
+
+        # Retira a última posição de posicoesArrumadas caso tenha passado de 5, pra manter sempre 5 no ranking sempre
+        if len(posicoesArrumadas) > 5:
+            posicoesArrumadas.pop()
+
+        # Tira a quebra de linha da última posição de "posicoesArrumadas"
+        posicoesArrumadas[-1] = posicoesArrumadas[-1][0:-1]
+
+        # Escreve no arquivo as novas posições
         f = open('ranking.txt', 'w')
-        f.writelines(posicoes)
+        f.writelines(posicoesArrumadas)
         f.close()
 
     def solvePuzzle(self):
@@ -672,36 +707,3 @@ class App:
                 self.writeRanking()
                 # Sai da tela de finalização
                 self.finalScreen = False
-
-
-# Bubble Sort
-def bubble_sort(items):
-    had_swap = True  # Inicializa como True para passar ao menos uma vez no laço
-    while had_swap:  # Enquanto na iteração houver troca de valores (swap)
-        had_swap = False  # Configura como falso inicialmente
-        print(f'TAMANHO DOS ITENS {len(items) - 1}')
-        for i in range(len(items) - 1):
-            valor1 = items[i].split(' ')
-            valor1 = float(valor1[1])
-
-            valor2 = items[i+1].split(' ')
-            valor2 = float(valor2[1])
-
-            if valor1 > valor2:  # Caso os elementos sendo comparados estejam desordenados
-                swap(items, i)  # Realiza a troca de valores nas posições
-            had_swap = True  # Como houveram troca de valores, deve-se continuar a iteração
-    return items
-
-# Auxiliar do bubble sort (swap = troca os itens de lugar)
-def swap(items, index):
- items[index], items[index + 1] = items[index + 1], items[index]
-
-# def bubble_sort(items):
-#     had_swap = True  # Inicializa como True para passar ao menos uma vez no laço
-#     while had_swap:  # Enquanto na iteração houver troca de valores (swap)
-#         had_swap = False  # Configura como falso inicialmente
-#         for i in range(len(items) - 1):
-#             if items[i] > items[i + 1]:  # Caso os elementos sendo comparados estejam desordenados
-#                 swap(items, i)  # Realiza a troca de valores nas posições
-#                 had_swap = True  # Como houveram troca de valores, deve-se continuar a iteração
-#     return items
