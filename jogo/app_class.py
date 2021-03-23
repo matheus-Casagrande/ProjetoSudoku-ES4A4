@@ -602,10 +602,38 @@ class App:
     def readRanking(self):
         f = open('ranking.txt', 'r')
         ranking = f.read()
+        f.close()
         return ranking.split('\n')
 
-    def writeRanking(self, info):
-        pass
+    def writeRanking(self):
+        posicoes = self.readRanking()
+        posicoes.append(f'6 {self.time} {self.input_texto.capitalize().strip()}')
+
+        print(posicoes)
+        print(bubble_sort(posicoes))
+        # posicoesAux = posicoes
+        # tempos = []
+        # for posicao in posicoes:
+        #     tempo = posicao.split(' ')
+        #     tempos.append(float(tempo[1]))
+        # tempos = bubble_sort(tempos)
+        #
+        # for index, posicao in enumerate(posicoesAux):
+        #     infos = posicao.split()
+        #     posicoesAux[index] = infos
+        #
+        # print(f'tempos: {tempos} | posicoes = {posicoes } | posicoesAux {posicoesAux}')
+        #
+        # for i in range(len(posicoes)):
+        #     for posicao in posicoesAux:
+        #         if float(posicao[1]) == tempos[i]:
+        #             posicoes[i] = ' '.join(posicao)
+        #             break
+
+
+        f = open('ranking.txt', 'w')
+        f.writelines(posicoes)
+        f.close()
 
     def solvePuzzle(self):
         for y in range(9):
@@ -641,6 +669,39 @@ class App:
             self.finalScreen = True
             if write:
                 # Escreve no ranking
-                self.writeRanking((self.time))
+                self.writeRanking()
                 # Sai da tela de finalização
                 self.finalScreen = False
+
+
+# Bubble Sort
+def bubble_sort(items):
+    had_swap = True  # Inicializa como True para passar ao menos uma vez no laço
+    while had_swap:  # Enquanto na iteração houver troca de valores (swap)
+        had_swap = False  # Configura como falso inicialmente
+        print(f'TAMANHO DOS ITENS {len(items) - 1}')
+        for i in range(len(items) - 1):
+            valor1 = items[i].split(' ')
+            valor1 = float(valor1[1])
+
+            valor2 = items[i+1].split(' ')
+            valor2 = float(valor2[1])
+
+            if valor1 > valor2:  # Caso os elementos sendo comparados estejam desordenados
+                swap(items, i)  # Realiza a troca de valores nas posições
+            had_swap = True  # Como houveram troca de valores, deve-se continuar a iteração
+    return items
+
+# Auxiliar do bubble sort (swap = troca os itens de lugar)
+def swap(items, index):
+ items[index], items[index + 1] = items[index + 1], items[index]
+
+# def bubble_sort(items):
+#     had_swap = True  # Inicializa como True para passar ao menos uma vez no laço
+#     while had_swap:  # Enquanto na iteração houver troca de valores (swap)
+#         had_swap = False  # Configura como falso inicialmente
+#         for i in range(len(items) - 1):
+#             if items[i] > items[i + 1]:  # Caso os elementos sendo comparados estejam desordenados
+#                 swap(items, i)  # Realiza a troca de valores nas posições
+#                 had_swap = True  # Como houveram troca de valores, deve-se continuar a iteração
+#     return items
